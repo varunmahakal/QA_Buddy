@@ -33,69 +33,69 @@ export function ProjectSettings() {
   const [newPriColor, setNewPriColor] = useState('#eff6ff');
   const [newPriText, setNewPriText] = useState('#2563eb');
 
-  const saveProject = () => {
-    updateProject(projectId!, { name: projectName, description: projectDesc, color: projectColor });
+  const saveProject = async () => {
+    await updateProject(projectId!, { name: projectName, description: projectDesc, color: projectColor });
     toast.success('Project info saved!');
   };
 
-  const addStage = () => {
+  const addStage = async () => {
     if (!newStageName.trim()) return;
     const stage: LifecycleStage = { id: generateId(), name: newStageName.trim(), color: newStageColor, order: stages.length };
     const updated = [...stages, stage];
     setStages(updated);
-    updateLifecycleStages(projectId!, updated);
+    await updateLifecycleStages(projectId!, updated);
     setNewStageName('');
     toast.success('Stage added');
   };
 
-  const removeStage = (id: string) => {
+  const removeStage = async (id: string) => {
     const updated = stages.filter((s) => s.id !== id);
     setStages(updated);
-    updateLifecycleStages(projectId!, updated);
+    await updateLifecycleStages(projectId!, updated);
   };
 
-  const toggleDefault = (id: string) => {
+  const toggleDefault = async (id: string) => {
     const updated = stages.map((s) => ({ ...s, isDefault: s.id === id }));
     setStages(updated);
-    updateLifecycleStages(projectId!, updated);
+    await updateLifecycleStages(projectId!, updated);
   };
 
-  const toggleFinal = (id: string) => {
+  const toggleFinal = async (id: string) => {
     const updated = stages.map((s) => ({ ...s, isFinal: s.id === id ? !s.isFinal : s.isFinal }));
     setStages(updated);
-    updateLifecycleStages(projectId!, updated);
+    await updateLifecycleStages(projectId!, updated);
   };
 
-  const addSeverity = () => {
+  const addSeverity = async () => {
     if (!newSevName.trim()) return;
     const sev: SeverityLevel = { id: generateId(), name: newSevName.trim(), color: newSevColor, textColor: newSevText };
     const updated = [...severities, sev];
     setSeverities(updated);
-    updateSeverityLevels(projectId!, updated);
+    await updateSeverityLevels(projectId!, updated);
     setNewSevName('');
     toast.success('Severity added');
   };
 
-  const removeSeverity = (id: string) => {
+  const removeSeverity = async (id: string) => {
     const updated = severities.filter((s) => s.id !== id);
     setSeverities(updated);
-    updateSeverityLevels(projectId!, updated);
+    await updateSeverityLevels(projectId!, updated);
   };
 
-  const addPriority = () => {
+  const addPriority = async () => {
     if (!newPriName.trim()) return;
     const pri: PriorityLevel = { id: generateId(), name: newPriName.trim(), color: newPriColor, textColor: newPriText };
     const updated = [...priorities, pri];
     setPriorities(updated);
-    updatePriorityLevels(projectId!, updated);
+    await updatePriorityLevels(projectId!, updated);
     setNewPriName('');
     toast.success('Priority added');
   };
 
-  const removePriority = (id: string) => {
+  const removePriority = async (id: string) => {
     const updated = priorities.filter((p) => p.id !== id);
     setPriorities(updated);
-    updatePriorityLevels(projectId!, updated);
+    await updatePriorityLevels(projectId!, updated);
   };
 
   const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
@@ -134,7 +134,7 @@ export function ProjectSettings() {
                 ))}
               </div>
             </div>
-            <button onClick={saveProject} className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700">Save Changes</button>
+            <button onClick={() => void saveProject()} className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700">Save Changes</button>
           </div>
         </Section>
         {/* Bug Lifecycle */}

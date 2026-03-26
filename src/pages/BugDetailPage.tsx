@@ -8,6 +8,7 @@ import { Badge } from '../components/ui/Badge';
 import { ImageLightbox } from '../components/ui/ImageLightbox';
 import { formatDateTime } from '../utils/helpers';
 import toast from 'react-hot-toast';
+import { useAuth } from '../contexts/AuthContext';
 
 export function BugDetailPage() {
   const { projectId, bugId } = useParams<{ projectId: string; bugId: string }>();
@@ -17,6 +18,7 @@ export function BugDetailPage() {
   const project = getProject(projectId!);
   const bug = getBug(bugId!);
 
+  const { user } = useAuth();
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   if (!project || !bug) return (
@@ -33,9 +35,9 @@ export function BugDetailPage() {
   const sev = project.severityLevels.find((s) => s.id === bug.severity);
   const pri = project.priorityLevels.find((p) => p.id === bug.priority);
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (confirmDelete) {
-      deleteBug(bug.id);
+      await deleteBug(bug.id);
       toast.success('Bug deleted');
       navigate(`/projects/${projectId}/bugs`);
     } else {
@@ -83,7 +85,7 @@ export function BugDetailPage() {
           </div>
           <div className="flex gap-2">
             <select value={bug.status}
-              onChange={(e) => { updateBugStatus(bug.id, e.target.value, 'QA Tester'); toast.success('Status updated'); }}
+              onChange={(e) => { void updateBugStatus(bug.id, e.target.value, user?.email ?? 'QA Tester'); toast.success('Status updated'); }}
               className="text-sm border rounded-lg px-3 py-2 focus:outline-none"
               style={{ background: stage?.color + '15', borderColor: stage?.color + '44', color: stage?.color }}>
               {project.lifecycleStages.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
@@ -94,7 +96,7 @@ export function BugDetailPage() {
             >
               <Pencil size={14}/> Edit
             </Link>
-            <button onClick={handleDelete}
+            <button onClick={() => void handleDelete()}
               className={`px-3 py-2 text-sm rounded-lg transition-colors flex items-center gap-1.5 ${confirmDelete ? 'bg-red-600 text-white' : 'border border-slate-300 text-slate-500 hover:border-red-400 hover:text-red-500'}`}>
               <Trash2 size={14}/>{confirmDelete ? 'Confirm?' : 'Delete'}
             </button>

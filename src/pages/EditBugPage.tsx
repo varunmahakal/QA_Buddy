@@ -139,16 +139,16 @@ export function EditBugPage() {
     setSteps(steps.map((s, idx) => (idx === i ? val : s)));
 
   // ── Submit ────────────────────────────────────────────────────────────────
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!title.trim()) { toast.error('Title is required'); return; }
 
     // If status changed, record it in the history timeline
     if (status !== bug.status) {
-      updateBugStatus(bug.id, status, reporter || 'QA Tester', 'Status updated via edit');
+      await updateBugStatus(bug.id, status, reporter || 'QA Tester', 'Status updated via edit');
     }
 
-    updateBug(bug.id, {
+    await updateBug(bug.id, {
       title:           title.trim(),
       module,
       bugType,
@@ -180,7 +180,7 @@ export function EditBugPage() {
   return (
     <div className="flex-1">
       <Header />
-      <form onSubmit={handleSubmit} className="p-6 space-y-4 max-w-4xl">
+      <form onSubmit={(e) => void handleSubmit(e)} className="p-6 space-y-4 max-w-4xl">
         {/* ── Page header ── */}
         <div className="flex items-center justify-between mb-2">
           <div>

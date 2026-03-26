@@ -58,18 +58,18 @@ export function TestCasesPage() {
   const pageTCs = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
   const handleStatusChange = (id: string, status: string) => {
-    updateTestCase(id, { status: status as any });
+    void updateTestCase(id, { status: status as any });
     toast.success('Status updated');
   };
 
   const saveRemarks = (id: string) => {
-    updateTestCase(id, { remarks: remarksValue });
+    void updateTestCase(id, { remarks: remarksValue });
     setEditingRemarks(null);
     toast.success('Remarks saved');
   };
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirmDelete === id) {
-      deleteTestCase(id);
+      await deleteTestCase(id);
       setConfirmDelete(null);
       toast.success('Test case deleted');
     } else {
@@ -204,7 +204,7 @@ export function TestCasesPage() {
                         )}
                       </td>
                       <td className="px-4 py-3">
-                        <button onClick={() => handleDelete(tc.id)}
+                        <button onClick={() => void handleDelete(tc.id)}
                           className={`p-1.5 rounded transition-colors ${confirmDelete === tc.id ? 'bg-red-500 text-white' : 'text-slate-300 hover:text-red-500'}`}>
                           <Trash2 size={13}/>
                         </button>
@@ -240,7 +240,7 @@ export function TestCasesPage() {
                     const tc = allTCs.find((t) => t.id === linkBugTC);
                     const current = tc?.linkedBugIds || [];
                     const updated = isLinked ? current.filter((id) => id !== b.id) : [...current, b.id];
-                    updateTestCase(linkBugTC, { linkedBugIds: updated });
+                    void updateTestCase(linkBugTC, { linkedBugIds: updated });
                   }
                 }}
                   className={`w-full flex items-center gap-3 p-3 rounded-lg text-left border transition-colors ${isLinked ? 'border-blue-400 bg-blue-50' : 'border-slate-200 hover:bg-slate-50'}`}>

@@ -108,9 +108,9 @@ export function TestCaseGeneratorPage() {
     setGenerated((prev) => [...prev, draft]);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (generated.length === 0) { toast.error('No test cases to save'); return; }
-    addTestCases(projectId!, generated.map(({ _key, ...tc }) => tc));
+    await addTestCases(projectId!, generated.map(({ _key, ...tc }) => tc));
     toast.success(`Saved ${generated.length} test cases!`);
     navigate(`/projects/${projectId}/test-cases`);
   };
@@ -134,7 +134,7 @@ export function TestCaseGeneratorPage() {
             <p className="text-sm text-slate-500 mt-0.5">Describe your feature and user flow — the generator will create structured test cases automatically.</p>
           </div>
           {generated.length > 0 && (
-            <button onClick={handleSave} className="flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white rounded-xl hover:bg-green-700 font-medium">
+            <button onClick={() => void handleSave()} className="flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white rounded-xl hover:bg-green-700 font-medium">
               <Save size={16}/> Save {generated.length} Test Cases
             </button>
           )}
@@ -235,7 +235,7 @@ export function TestCaseGeneratorPage() {
                 <button onClick={addDraft} className="flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-800 px-3 py-1.5 rounded-lg hover:bg-blue-50 border border-blue-200">
                   <Plus size={14}/> Add Row
                 </button>
-                <button onClick={handleSave} className="flex items-center gap-2 px-4 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium">
+                <button onClick={() => void handleSave()} className="flex items-center gap-2 px-4 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium">
                   <Save size={14}/> Save All
                 </button>
               </div>

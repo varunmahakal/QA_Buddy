@@ -8,6 +8,7 @@ import { Header } from '../components/layout/Header';
 import { FileUpload } from '../components/ui/FileUpload';
 import type { Screenshot } from '../types';
 import toast from 'react-hot-toast';
+import { useAuth } from '../contexts/AuthContext';
 
 const BUG_TYPES = ['Functional','UI/UX','Performance','Security','Data Integrity','AI Output','API','Accessibility'];
 const REPRO = ['Always','Intermittent','Rare','Unable to Reproduce'];
@@ -73,6 +74,7 @@ export function NewBugPage() {
   const { projectId } = useParams<{ projectId: string }>();
   const { getProject } = useProjectStore();
   const { addBug } = useBugStore();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const project = getProject(projectId!);
   if (!project) return <div className="p-10 text-slate-500">Project not found.</div>;
@@ -90,7 +92,7 @@ export function NewBugPage() {
   const [severity, setSeverity] = useState(project.severityLevels[0]?.id || '');
   const [priority, setPriority] = useState(project.priorityLevels[0]?.id || '');
   const [status, setStatus] = useState(defaultStage?.id || '');
-  const [reporter, setReporter] = useState('');
+  const [reporter, setReporter] = useState(user?.email ?? '');
   const [assignee, setAssignee] = useState('');
   const [workaround, setWorkaround] = useState('');
   const [additionalNotes, setAdditionalNotes] = useState('');
@@ -116,10 +118,10 @@ export function NewBugPage() {
   const updateStep = (i: number, val: string) =>
     setSteps(steps.map((s, idx) => (idx === i ? val : s)));
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!title.trim()) { toast.error('Title is required'); return; }
-    addBug(projectId!, {
+    await addBug(projectId!, {
       title: title.trim(), module, bugType, reproducibility, description,
       expectedBehavior, actualBehavior,
       stepsToReproduce: steps.filter(Boolean),
@@ -139,7 +141,7 @@ export function NewBugPage() {
   return (
     <div className="flex-1">
       <Header />
-      <form onSubmit={handleSubmit} className="p-6 space-y-4 max-w-4xl">
+      <form onSubmit={(e) => void handleSubmit(e)} className="p-6 space-y-4 max-w-4xl">
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-xl font-bold text-slate-800">Report a Bug</h2>
           <div className="flex gap-2">
@@ -261,7 +263,7 @@ export function NewBugPage() {
           <FileUpload screenshots={screenshots} onChange={setScreenshots} />
         </FormSection>
 
-        <FormSection title="AI / Diagnosis Details (DrBuddy Specific)" defaultOpen={false}>
+        <FormSection title="AI / Diagnosis Details (Optional)" defaultOpen={false}>
           <div className="grid grid-cols-2 gap-4">
             <Field label="Input Symptoms / Chief Complaint">
               <textarea value={inputSymptoms} onChange={(e) => setInputSymptoms(e.target.value)} rows={2} className={inputCls + ' resize-none'} />

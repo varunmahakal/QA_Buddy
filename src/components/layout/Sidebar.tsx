@@ -1,8 +1,10 @@
 import { NavLink, useParams } from 'react-router-dom';
-import { Bug, TestTube2, Settings, LayoutDashboard, Home, Wand2 } from 'lucide-react';
+import { Bug, TestTube2, Settings, LayoutDashboard, Home, Wand2, LogOut } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
 
 export function Sidebar() {
   const { projectId } = useParams<{ projectId: string }>();
+  const { user, signOut } = useAuth();
 
   return (
     <aside className="w-60 bg-slate-900 min-h-screen flex flex-col fixed left-0 top-0 z-10">
@@ -13,7 +15,7 @@ export function Sidebar() {
             <Bug size={18} className="text-white" />
           </div>
           <div>
-            <div className="text-white font-bold text-sm leading-tight">DrBuddy QA</div>
+            <div className="text-white font-bold text-sm leading-tight">QA Buddy</div>
             <div className="text-slate-400 text-xs">Testing Suite</div>
           </div>
         </div>
@@ -54,8 +56,21 @@ export function Sidebar() {
         </>
       )}
 
-      <div className="p-4 border-t border-slate-700">
-        <p className="text-xs text-slate-500 text-center">DrBuddy QA Tool v1.0</p>
+      {!projectId && <div className="flex-1" />}
+
+      {/* User + Sign Out */}
+      <div className="p-4 border-t border-slate-700 space-y-2">
+        {user && (
+          <p className="text-xs text-slate-400 truncate px-1" title={user.email}>{user.email}</p>
+        )}
+        <button
+          onClick={() => void signOut()}
+          className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+        >
+          <LogOut size={15} />
+          <span>Sign Out</span>
+        </button>
+        <p className="text-xs text-slate-600 text-center pt-1">QA Buddy v1.0</p>
       </div>
     </aside>
   );

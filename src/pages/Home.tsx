@@ -19,20 +19,20 @@ export function Home() {
   const [color, setColor] = useState('#2563eb');
   const [deleting, setDeleting] = useState<string | null>(null);
 
-  const handleCreate = (e: React.FormEvent) => {
+  const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
-    const p = addProject({ name: name.trim(), description, color });
+    const p = await addProject({ name: name.trim(), description, color });
     toast.success('Project created!');
     setShowCreate(false);
     setName(''); setDescription(''); setColor('#2563eb');
     navigate(`/projects/${p.id}`);
   };
 
-  const handleDelete = (id: string, e: React.MouseEvent) => {
+  const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.preventDefault();
     if (deleting === id) {
-      deleteProject(id);
+      await deleteProject(id);
       toast.success('Project deleted');
       setDeleting(null);
     } else {
@@ -51,9 +51,9 @@ export function Home() {
           <div className="w-10 h-10 rounded-xl bg-blue-500 flex items-center justify-center">
             <Bug size={20} className="text-white" />
           </div>
-          <h1 className="text-3xl font-bold">DrBuddy QA Tool</h1>
+          <h1 className="text-3xl font-bold">QA Buddy</h1>
         </div>
-        <p className="text-slate-300 mb-6 max-w-xl">Manage bug reports, test cases, and project lifecycle for healthcare software testing.</p>
+        <p className="text-slate-300 mb-6 max-w-xl">Manage bug reports, test cases, and project lifecycle for your software testing workflows.</p>
         <button onClick={() => setShowCreate(true)} className="flex items-center gap-2 px-5 py-2.5 bg-blue-500 hover:bg-blue-400 rounded-xl text-white font-medium transition-colors">
           <Plus size={18} /> New Project
         </button>
@@ -89,7 +89,7 @@ export function Home() {
                         <p className="text-xs text-slate-400 flex items-center gap-1 mt-0.5"><Calendar size={11}/>{formatDate(p.createdAt)}</p>
                       </div>
                     </div>
-                    <button onClick={(e) => handleDelete(p.id, e)} className={`p-1.5 rounded-lg transition-colors ${deleting === p.id ? 'bg-red-500 text-white' : 'text-slate-300 hover:text-red-500 hover:bg-red-50'}`} title={deleting === p.id ? 'Click again to confirm' : 'Delete project'}>
+                    <button onClick={(e) => void handleDelete(p.id, e)} className={`p-1.5 rounded-lg transition-colors ${deleting === p.id ? 'bg-red-500 text-white' : 'text-slate-300 hover:text-red-500 hover:bg-red-50'}`} title={deleting === p.id ? 'Click again to confirm' : 'Delete project'}>
                       <Trash2 size={14} />
                     </button>
                   </div>
@@ -121,7 +121,7 @@ export function Home() {
       </div>
 
       <Modal isOpen={showCreate} onClose={() => setShowCreate(false)} title="Create New Project">
-        <form onSubmit={handleCreate} className="space-y-4">
+        <form onSubmit={(e) => void handleCreate(e)} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Project Name *</label>
             <input value={name} onChange={(e) => setName(e.target.value)} required placeholder="e.g. DrBuddy v2.0"

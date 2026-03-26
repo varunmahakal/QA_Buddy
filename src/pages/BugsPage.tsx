@@ -8,6 +8,7 @@ import { Badge } from '../components/ui/Badge';
 import { exportBugsToExcel } from '../utils/exportExcel';
 import { formatDate } from '../utils/helpers';
 import toast from 'react-hot-toast';
+import { useAuth } from '../contexts/AuthContext';
 
 type SortField = 'id' | 'title' | 'severity' | 'priority' | 'status' | 'createdAt';
 type SortDir = 'asc' | 'desc';
@@ -16,6 +17,7 @@ export function BugsPage() {
   const { projectId } = useParams<{ projectId: string }>();
   const { getProject } = useProjectStore();
   const { getBugsByProject, updateBugStatus } = useBugStore();
+  const { user } = useAuth();
   const project = getProject(projectId!);
   const allBugs = getBugsByProject(projectId!);
 
@@ -176,7 +178,7 @@ export function BugsPage() {
                       <td className="px-4 py-3 whitespace-nowrap">{pri && <Badge label={pri.name} color={pri.color} textColor={pri.textColor} size="sm"/>}</td>
                       <td className="px-4 py-3 whitespace-nowrap">
                         <select value={bug.status}
-                          onChange={(e) => { updateBugStatus(bug.id, e.target.value, 'QA Tester'); toast.success('Status updated'); }}
+                          onChange={(e) => { void updateBugStatus(bug.id, e.target.value, user?.email ?? 'QA Tester'); toast.success('Status updated'); }}
                           className="text-xs border rounded-full px-2 py-1 focus:outline-none cursor-pointer"
                           style={{ background: stage?.color + '22', color: stage?.color, borderColor: stage?.color + '44' }}>
                           {project.lifecycleStages.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
