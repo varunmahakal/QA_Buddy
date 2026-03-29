@@ -14,7 +14,7 @@ import { createTestCase } from '../lib/testCaseService';
 import type { TestCaseFormData } from '../types';
 import toast from 'react-hot-toast';
 import {
-  Video, Square, Plus, Trash2, ChevronRight, Bookmark,
+  Video, Square, Plus, Trash2, ChevronRight,
   Wand2, Save, Copy, MousePointer2, Keyboard, Globe,
   CheckCircle2, XCircle, ClipboardList, PenLine, Loader2,
   TriangleAlert, ExternalLink
@@ -102,15 +102,6 @@ export function TestCaseRecorderPage() {
   const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
   const ANON_KEY     = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
   const APP_ORIGIN   = window.location.origin;
-
-  // ── Bookmarklet href (generated after session created) ─────────────────────
-  const bookmarkletHref = sessionId
-    ? (() => {
-        const src = `${APP_ORIGIN}/recorder.js?s=${sessionId}&u=${encodeURIComponent(SUPABASE_URL)}&k=${encodeURIComponent(ANON_KEY)}&t=${Date.now()}`;
-        const code = `(function(){if(window.__QABuddy__){window.__QABuddy__.destroy();return;}var s=document.createElement('script');s.src='${src}';document.head.appendChild(s);})()`;
-        return `javascript:${encodeURIComponent(code)}`;
-      })()
-    : '#';
 
   // ── Start recording ────────────────────────────────────────────────────────
   const startRecording = async () => {
@@ -395,66 +386,49 @@ export function TestCaseRecorderPage() {
           {/* Activation panel — shown until first event arrives */}
           {events.length === 0 && (
             <div className="bg-white rounded-xl border-2 border-violet-200 overflow-hidden">
-              {/* Header */}
               <div className="bg-violet-600 px-5 py-3 flex items-center gap-2">
-                <Bookmark size={16} className="text-white" />
-                <span className="text-white font-semibold text-sm">Activate the Recorder on the New Tab</span>
+                <Video size={16} className="text-white" />
+                <span className="text-white font-semibold text-sm">Start the Recorder on the New Tab</span>
               </div>
-
               <div className="p-5 space-y-4">
-                <p className="text-sm text-slate-600">
-                  The page has opened in a new tab. Now you need to start the recorder on it. Choose the easiest method:
-                </p>
-
-                {/* Option A — Console script (recommended) */}
-                <div className="rounded-lg border border-green-200 bg-green-50 p-4 space-y-2">
-                  <div className="flex items-center gap-2 font-semibold text-green-800 text-sm">
-                    <span className="w-5 h-5 rounded-full bg-green-600 text-white text-xs flex items-center justify-center font-bold">A</span>
-                    Paste in Browser Console <span className="text-xs font-normal text-green-600 ml-1">(easiest — no setup needed)</span>
-                  </div>
-                  <ol className="text-sm text-green-800 space-y-1 list-none pl-0">
-                    <li className="flex gap-2"><span className="text-green-500 font-bold">1.</span> Switch to the new tab</li>
-                    <li className="flex gap-2"><span className="text-green-500 font-bold">2.</span> Press <kbd className="bg-white border border-green-300 rounded px-1.5 py-0.5 text-xs font-mono">F12</kbd> to open DevTools → click the <strong>Console</strong> tab</li>
-                    <li className="flex gap-2"><span className="text-green-500 font-bold">3.</span> Click <strong>Copy Script</strong> below, paste it, press <kbd className="bg-white border border-green-300 rounded px-1.5 py-0.5 text-xs font-mono">Enter</kbd></li>
+                <div className="flex items-start gap-4">
+                  {/* Steps */}
+                  <ol className="flex-1 space-y-3 text-sm text-slate-700">
+                    <li className="flex gap-3 items-start">
+                      <span className="w-6 h-6 rounded-full bg-violet-600 text-white text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">1</span>
+                      <span>Switch to the new tab that just opened</span>
+                    </li>
+                    <li className="flex gap-3 items-start">
+                      <span className="w-6 h-6 rounded-full bg-violet-600 text-white text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">2</span>
+                      <span>
+                        Press <kbd className="bg-slate-100 border border-slate-300 rounded px-1.5 py-0.5 text-xs font-mono">F12</kbd> to open DevTools, then click the <strong>Console</strong> tab
+                      </span>
+                    </li>
+                    <li className="flex gap-3 items-start">
+                      <span className="w-6 h-6 rounded-full bg-violet-600 text-white text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">3</span>
+                      <span>
+                        Click <strong>Copy Script</strong>, paste into the Console, press <kbd className="bg-slate-100 border border-slate-300 rounded px-1.5 py-0.5 text-xs font-mono">Enter</kbd>
+                      </span>
+                    </li>
+                    <li className="flex gap-3 items-start">
+                      <span className="w-6 h-6 rounded-full bg-violet-100 text-violet-600 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">4</span>
+                      <span>A <strong>🔴 QA Buddy</strong> toolbar will appear — perform your test actions and steps stream here live</span>
+                    </li>
                   </ol>
-                  <button
-                    onClick={() => {
-                      const src = `${APP_ORIGIN}/recorder.js?s=${sessionId}&u=${encodeURIComponent(SUPABASE_URL)}&k=${encodeURIComponent(ANON_KEY)}&t=${Date.now()}`;
-                      const script = `var s=document.createElement('script');s.src='${src}';document.head.appendChild(s);`;
-                      navigator.clipboard.writeText(script);
-                      toast.success('Script copied — paste it in the Console tab of DevTools (F12)');
-                    }}
-                    className="flex items-center gap-1.5 bg-green-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-green-700"
-                  >
-                    <Copy size={13} /> Copy Script
-                  </button>
                 </div>
-
-                {/* Option B — Bookmarklet */}
-                <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 space-y-2">
-                  <div className="flex items-center gap-2 font-semibold text-slate-700 text-sm">
-                    <span className="w-5 h-5 rounded-full bg-slate-500 text-white text-xs flex items-center justify-center font-bold">B</span>
-                    Use the Bookmarklet <span className="text-xs font-normal text-slate-500 ml-1">(reusable across sessions)</span>
-                  </div>
-                  <ol className="text-sm text-slate-600 space-y-1 list-none pl-0">
-                    <li className="flex gap-2"><span className="text-slate-400 font-bold">1.</span> Show your bookmarks bar: <kbd className="bg-white border border-slate-300 rounded px-1.5 py-0.5 text-xs font-mono">Ctrl+Shift+B</kbd> (Windows) / <kbd className="bg-white border border-slate-300 rounded px-1.5 py-0.5 text-xs font-mono">⌘+Shift+B</kbd> (Mac)</li>
-                    <li className="flex gap-2"><span className="text-slate-400 font-bold">2.</span> Drag the button below onto the bookmarks bar</li>
-                    <li className="flex gap-2"><span className="text-slate-400 font-bold">3.</span> Switch to the new tab → click <strong>🔴 QA Buddy Recorder</strong> in the bookmarks bar</li>
-                  </ol>
-                  <a
-                    href={bookmarkletHref}
-                    draggable
-                    className="inline-flex items-center gap-2 bg-violet-600 text-white px-4 py-2 rounded-lg text-sm font-medium cursor-grab active:cursor-grabbing select-none hover:bg-violet-700"
-                    onClick={e => e.preventDefault()}
-                    title="Drag this to your bookmarks bar"
-                  >
-                    <Video size={14} />
-                    🔴 QA Buddy Recorder
-                  </a>
-                </div>
-
+                <button
+                  onClick={() => {
+                    const src = `${APP_ORIGIN}/recorder.js?s=${sessionId}&u=${encodeURIComponent(SUPABASE_URL)}&k=${encodeURIComponent(ANON_KEY)}&t=${Date.now()}`;
+                    const script = `var s=document.createElement('script');s.src='${src}';document.head.appendChild(s);`;
+                    navigator.clipboard.writeText(script);
+                    toast.success('Script copied! Switch to the new tab → F12 → Console → paste → Enter');
+                  }}
+                  className="flex items-center gap-2 bg-violet-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-violet-700 w-full justify-center"
+                >
+                  <Copy size={14} /> Copy Script to Clipboard
+                </button>
                 <p className="text-xs text-slate-400 text-center">
-                  Once activated, a red toolbar will appear on the target page and steps will stream here automatically.
+                  Steps will appear below automatically once the recorder is active
                 </p>
               </div>
             </div>
