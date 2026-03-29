@@ -13,6 +13,7 @@ import { BugDetailPage } from './pages/BugDetailPage';
 import { EditBugPage } from './pages/EditBugPage';
 import { TestCasesPage } from './pages/TestCasesPage';
 import { TestCaseGeneratorPage } from './pages/TestCaseGeneratorPage';
+import { TestCaseRecorderPage } from './pages/TestCaseRecorderPage';
 
 function App() {
   return (
@@ -39,6 +40,7 @@ function App() {
               <Route path="/projects/:projectId/bugs/:bugId/edit" element={<EditBugPage />} />
               <Route path="/projects/:projectId/test-cases" element={<TestCasesPage />} />
               <Route path="/projects/:projectId/test-cases/generate" element={<TestCaseGeneratorPage />} />
+              <Route path="/projects/:projectId/test-cases/record" element={<TestCaseRecorderPage />} />
             </Route>
           </Route>
         </Routes>

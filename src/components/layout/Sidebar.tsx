@@ -1,5 +1,5 @@
 import { NavLink, useParams } from 'react-router-dom';
-import { Bug, TestTube2, Settings, LayoutDashboard, Home, Wand2, LogOut } from 'lucide-react';
+import { Bug, TestTube2, Settings, LayoutDashboard, Home, Wand2, LogOut, Video } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
 export function Sidebar() {
@@ -43,6 +43,7 @@ export function Sidebar() {
               { to: `/projects/${projectId}/bugs`, icon: <Bug size={16}/>, label: 'Bugs', end: false },
               { to: `/projects/${projectId}/test-cases`, icon: <TestTube2 size={16}/>, label: 'Test Cases', end: false },
               { to: `/projects/${projectId}/test-cases/generate`, icon: <Wand2 size={16}/>, label: 'TC Generator', end: false },
+              { to: `/projects/${projectId}/test-cases/record`, icon: <Video size={16}/>, label: 'Test Recorder', end: false },
               { to: `/projects/${projectId}/settings`, icon: <Settings size={16}/>, label: 'Settings', end: false },
             ].map(({ to, icon, label, end }) => (
               <NavLink key={to} to={to} end={end} className={({ isActive }) =>
