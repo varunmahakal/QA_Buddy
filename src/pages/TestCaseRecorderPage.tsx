@@ -114,13 +114,10 @@ export function TestCaseRecorderPage() {
       setUrl(target);
       setSessionId(id);
       setPhase('recording');
-      // Expose session for the Chrome extension to read
-      (window as Window & { __QA_BUDDY_SESSION__?: object }).__QA_BUDDY_SESSION__ = {
-        sessionId:   id,
-        supabaseUrl: SUPABASE_URL,
-        anonKey:     ANON_KEY,
-        targetUrl:   target,
-      };
+      // Expose session for the Chrome extension via CustomEvent (picked up by content-bridge.js)
+      const sessionData = { sessionId: id, supabaseUrl: SUPABASE_URL, anonKey: ANON_KEY, targetUrl: target };
+      (window as Window & { __QA_BUDDY_SESSION__?: object }).__QA_BUDDY_SESSION__ = sessionData;
+      window.dispatchEvent(new CustomEvent('__qa_buddy_session__', { detail: sessionData }));
       window.open(target, '_blank');
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Failed to start recording session');

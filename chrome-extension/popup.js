@@ -18,34 +18,15 @@ function showError(msg) { errorBox.textContent = msg; errorBox.style.display = '
 function clearError()   { errorBox.style.display = 'none'; }
 function setHint(text)  { hint.textContent = text; }
 
-// Search ALL http/https tabs for window.__QA_BUDDY_SESSION__
-async function findSession() {
-  const allTabs = await chrome.tabs.query({ url: ['https://*/*', 'http://*/*'] });
-  const checks = allTabs.map(async (tab) => {
-    try {
-      const results = await chrome.scripting.executeScript({
-        target: { tabId: tab.id },
-        world:  'MAIN',
-        func:   () => window.__QA_BUDDY_SESSION__ ?? null,
-      });
-      const s = results?.[0]?.result;
-      return s?.sessionId ? s : null;
-    } catch (_) {
-      return null;
-    }
-  });
-  const results = await Promise.all(checks);
-  return results.find(s => s !== null) ?? null;
-}
-
 (async () => {
   try {
-    // 1. Current (target) tab
+    // 1. Get the current (target) tab
     const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
     currentTabId = activeTab?.id;
 
-    // 2. Search all tabs for an active QA Buddy session
-    const session = await findSession();
+    // 2. Read session from chrome.storage.session (saved by background.js via content-bridge.js)
+    const stored = await chrome.storage.session.get('qaSession');
+    const session = stored?.qaSession ?? null;
 
     if (!session?.sessionId) {
       headerSub.textContent = 'No active session';
@@ -106,7 +87,7 @@ btnActivate.addEventListener('click', async () => {
       args:   [currentSession],
     });
 
-    // Inject recorder.js into the target tab's MAIN world (bypasses CSP)
+    // Inject recorder.js into MAIN world — bypasses CSP completely
     await chrome.scripting.executeScript({
       target: { tabId: currentTabId },
       world:  'MAIN',
@@ -141,6 +122,8 @@ btnStop.addEventListener('click', async () => {
       world:  'MAIN',
       func:   () => { if (window.__QABuddy__) window.__QABuddy__.stop(); },
     });
+    // Clear the session from storage so next recording starts fresh
+    await chrome.storage.session.remove('qaSession');
     headerSub.textContent = 'Recording stopped';
     sessionSteps.textContent = 'Done — switch to QA Buddy to review';
     setHint('Switch to QA Buddy to review steps and generate your test case.');
