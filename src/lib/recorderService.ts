@@ -85,7 +85,7 @@ export async function loadRecordingEvents(sessionId: string): Promise<RecordingE
     .from('recording_events')
     .select('*')
     .eq('session_id', sessionId)
-    .order('step_order', { ascending: true });
+    .order('created_at', { ascending: true });
 
   if (error) throw new Error(error.message);
   return (data as RecordingEventRow[]).map(toRecordingEvent);

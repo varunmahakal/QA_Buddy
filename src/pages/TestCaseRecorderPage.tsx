@@ -172,9 +172,23 @@ export function TestCaseRecorderPage() {
             stepOrder:      row.step_order,
             createdAt:      row.created_at,
           };
+
+          // When the recorder re-injects after a page navigation, it fires a
+          // "Recording started at:" event. Use this as a signal to re-fetch
+          // ALL events from the DB — this ensures events from the previous page
+          // are preserved and any events missed during the navigation gap are recovered.
+          if (newEvent.eventType === 'navigation' && newEvent.value.startsWith('Recording started at:')) {
+            loadRecordingEvents(sessionId).then(setEvents).catch(() => {});
+            return;
+          }
+
           setEvents(prev => {
             if (prev.find(e => e.id === newEvent.id)) return prev;
-            return [...prev, newEvent].sort((a, b) => a.stepOrder - b.stepOrder);
+            // Sort by created_at (DB server timestamp) — reliable across re-injections
+            // where step_order resets to 0 on each new page
+            return [...prev, newEvent].sort(
+              (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+            );
           });
         }
       )
@@ -193,6 +207,10 @@ export function TestCaseRecorderPage() {
   const stopRecording = async () => {
     if (!sessionId) return;
     await stopRecordingSession(sessionId);
+    // Always re-fetch from DB before review — Realtime may have missed events
+    // during page navigations/re-injections, so don't rely solely on live state.
+    const allEvents = await loadRecordingEvents(sessionId);
+    setEvents(allEvents);
     setPhase('review');
   };
 
