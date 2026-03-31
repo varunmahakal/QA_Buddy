@@ -18,58 +18,53 @@ function showError(msg) { errorBox.textContent = msg; errorBox.style.display = '
 function clearError()   { errorBox.style.display = 'none'; }
 function setHint(text)  { hint.textContent = text; }
 
+// Search ALL http/https tabs for window.__QA_BUDDY_SESSION__
+async function findSession() {
+  const allTabs = await chrome.tabs.query({ url: ['https://*/*', 'http://*/*'] });
+  const checks = allTabs.map(async (tab) => {
+    try {
+      const results = await chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        world:  'MAIN',
+        func:   () => window.__QA_BUDDY_SESSION__ ?? null,
+      });
+      const s = results?.[0]?.result;
+      return s?.sessionId ? s : null;
+    } catch (_) {
+      return null;
+    }
+  });
+  const results = await Promise.all(checks);
+  return results.find(s => s !== null) ?? null;
+}
+
 (async () => {
   try {
     // 1. Current (target) tab
     const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
     currentTabId = activeTab?.id;
 
-    // 2. Find the QA Buddy tab
-    const qaTabMatches = await chrome.tabs.query({
-      url: ['https://qabuddy.netlify.app/*', 'http://localhost:*/*', 'http://127.0.0.1:*/*']
-    });
-
-    if (qaTabMatches.length === 0) {
-      headerSub.textContent = 'QA Buddy tab not found';
-      setHint('Open QA Buddy and click "Start Recording" first.');
-      return;
-    }
-
-    const qaTab = qaTabMatches[0];
-
-    // 3. Read session from QA Buddy tab's MAIN world (where React sets window.__QA_BUDDY_SESSION__)
-    let session = null;
-    try {
-      const results = await chrome.scripting.executeScript({
-        target: { tabId: qaTab.id },
-        world: 'MAIN',                          // ← must be MAIN to read page window vars
-        func: () => window.__QA_BUDDY_SESSION__ ?? null,
-      });
-      session = results?.[0]?.result ?? null;
-    } catch (err) {
-      showError('Could not read session: ' + (err.message || err));
-      headerSub.textContent = 'Permission error';
-      return;
-    }
+    // 2. Search all tabs for an active QA Buddy session
+    const session = await findSession();
 
     if (!session?.sessionId) {
       headerSub.textContent = 'No active session';
-      setHint('Go to QA Buddy → Test Recorder → enter a URL → click "Start Recording".');
+      setHint('Open QA Buddy → Test Recorder → enter a URL → click "Start Recording".');
       return;
     }
 
-    // 4. Session found — update UI
+    // 3. Session found — update UI
     currentSession = session;
     sessionCard.classList.remove('empty');
     sessionUrl.textContent = session.targetUrl || 'Recording in progress…';
 
-    // 5. Check if recorder already running on current tab (MAIN world)
+    // 4. Check if recorder already running on current tab
     let isRecording = false;
     try {
       const check = await chrome.scripting.executeScript({
         target: { tabId: currentTabId },
-        world: 'MAIN',
-        func: () => !!window.__QABuddy__,
+        world:  'MAIN',
+        func:   () => !!window.__QABuddy__,
       });
       isRecording = check?.[0]?.result ?? false;
     } catch (_) {}
@@ -83,15 +78,15 @@ function setHint(text)  { hint.textContent = text; }
       setHint('Perform your test. Click Stop when done.');
       startPolling();
     } else {
-      headerSub.textContent = 'Session ready';
+      headerSub.textContent = 'Session ready ✓';
       btnActivate.disabled = false;
       btnStop.disabled = true;
-      setHint('Click "Activate Recorder" then perform your test actions.');
+      setHint('Click "Activate Recorder" then perform your test actions on this page.');
     }
 
   } catch (err) {
-    showError('Unexpected error: ' + (err.message || err));
-    headerSub.textContent = 'Error';
+    showError('Error: ' + (err.message || err));
+    headerSub.textContent = 'Something went wrong';
   }
 })();
 
@@ -103,19 +98,19 @@ btnActivate.addEventListener('click', async () => {
   btnActivate.textContent = 'Injecting…';
 
   try {
-    // Step 1: Write session config into target tab's window (MAIN world)
+    // Write session config into the target tab's window (MAIN world)
     await chrome.scripting.executeScript({
       target: { tabId: currentTabId },
-      world: 'MAIN',
-      func: (s) => { window.__QA_BUDDY_SESSION_INJECT__ = s; },
-      args: [currentSession],
+      world:  'MAIN',
+      func:   (s) => { window.__QA_BUDDY_SESSION_INJECT__ = s; },
+      args:   [currentSession],
     });
 
-    // Step 2: Inject recorder.js into MAIN world (bypasses CSP)
+    // Inject recorder.js into the target tab's MAIN world (bypasses CSP)
     await chrome.scripting.executeScript({
       target: { tabId: currentTabId },
-      world: 'MAIN',
-      files: ['recorder.js'],
+      world:  'MAIN',
+      files:  ['recorder.js'],
     });
 
     headerSub.textContent = 'Recorder active';
@@ -143,8 +138,8 @@ btnStop.addEventListener('click', async () => {
   try {
     await chrome.scripting.executeScript({
       target: { tabId: currentTabId },
-      world: 'MAIN',
-      func: () => { if (window.__QABuddy__) window.__QABuddy__.stop(); },
+      world:  'MAIN',
+      func:   () => { if (window.__QABuddy__) window.__QABuddy__.stop(); },
     });
     headerSub.textContent = 'Recording stopped';
     sessionSteps.textContent = 'Done — switch to QA Buddy to review';
@@ -162,8 +157,8 @@ function startPolling() {
     try {
       const results = await chrome.scripting.executeScript({
         target: { tabId: currentTabId },
-        world: 'MAIN',
-        func: () => (window.__QABuddy__ ? window.__QABuddy__.stepCount() : -1),
+        world:  'MAIN',
+        func:   () => (window.__QABuddy__ ? window.__QABuddy__.stepCount() : -1),
       });
       const count = results?.[0]?.result ?? -1;
       if (count === -1) { stopPolling(); return; }
