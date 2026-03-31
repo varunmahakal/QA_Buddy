@@ -8,7 +8,13 @@
 
 // Forward any new session event to the background worker
 window.addEventListener('__qa_buddy_session__', function (e) {
-  chrome.runtime.sendMessage({ type: 'QA_BUDDY_SESSION', session: e.detail });
+  try {
+    chrome.runtime.sendMessage({ type: 'QA_BUDDY_SESSION', session: e.detail });
+  } catch (_) {
+    // Extension was reloaded while this content script was still alive.
+    // Context is invalidated — nothing to do, the new content script will
+    // handle the next event.
+  }
 });
 
 // On load: ask the page if it already has a session (handles the case where
