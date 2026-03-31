@@ -162,8 +162,31 @@
     }, 800);
   }
 
+  // Capture full-page navigations/redirects before the page unloads.
+  // Uses keepalive:true so the fetch completes even after page destruction.
+  function onBeforeUnload() {
+    stepOrder++;
+    fetch(SUPABASE_URL + '/rest/v1/recording_events', {
+      method:   'POST',
+      headers:  { 'apikey': ANON_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body:     JSON.stringify({
+        session_id:      SESSION_ID,
+        event_type:      'navigation',
+        target_selector: '',
+        target_text:     document.title,
+        value:           'Navigated away from: ' + window.location.href,
+        url:             window.location.href,
+        page_title:      document.title,
+        assertion_type:  '',
+        step_order:      stepOrder,
+      }),
+      keepalive: true,
+    }).catch(function () {});
+  }
+
   document.addEventListener('click', onClickCapture, true);
   document.addEventListener('input', onInputCapture, true);
+  window.addEventListener('beforeunload', onBeforeUnload);
 
   // SPA navigation detection
   navCheckTimer = setInterval(function () {
@@ -196,6 +219,7 @@
       clearInterval(navCheckTimer);
       document.removeEventListener('click', onClickCapture, true);
       document.removeEventListener('input', onInputCapture, true);
+      window.removeEventListener('beforeunload', onBeforeUnload);
       if (toolbar.parentNode) toolbar.parentNode.removeChild(toolbar);
       if (style.parentNode)   style.parentNode.removeChild(style);
       delete window.__QABuddy__;

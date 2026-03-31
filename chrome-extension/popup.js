@@ -119,6 +119,9 @@ btnActivate.addEventListener('click', async () => {
       files:  ['recorder.js'],
     });
 
+    // Tell background.js to watch this tab for navigations and auto re-inject
+    await chrome.storage.session.set({ activeRecording: { tabId: currentTabId, session: currentSession } });
+
     headerSub.textContent = 'Recorder active';
     btnActivate.textContent = '▶ Activate Recorder';
     btnActivate.disabled = true;
@@ -147,8 +150,8 @@ btnStop.addEventListener('click', async () => {
       world:  'MAIN',
       func:   () => { if (window.__QABuddy__) window.__QABuddy__.stop(); },
     });
-    // Clear the session from storage so next recording starts fresh
-    await chrome.storage.session.remove('qaSession');
+    // Clear session + active recording so next recording starts fresh
+    await chrome.storage.session.remove(['qaSession', 'activeRecording']);
     headerSub.textContent = 'Recording stopped';
     sessionSteps.textContent = 'Done — switch to QA Buddy to review';
     setHint('Switch to QA Buddy to review steps and generate your test case.');
