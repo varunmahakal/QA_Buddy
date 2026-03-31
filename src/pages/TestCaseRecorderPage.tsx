@@ -114,6 +114,13 @@ export function TestCaseRecorderPage() {
       setUrl(target);
       setSessionId(id);
       setPhase('recording');
+      // Expose session for the Chrome extension to read
+      (window as Window & { __QA_BUDDY_SESSION__?: object }).__QA_BUDDY_SESSION__ = {
+        sessionId:   id,
+        supabaseUrl: SUPABASE_URL,
+        anonKey:     ANON_KEY,
+        targetUrl:   target,
+      };
       window.open(target, '_blank');
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Failed to start recording session');
@@ -338,11 +345,11 @@ export function TestCaseRecorderPage() {
               </div>
               <div className="flex gap-3">
                 <span className="w-6 h-6 rounded-full bg-violet-100 text-violet-700 text-xs font-bold flex items-center justify-center shrink-0">2</span>
-                <span>Switch to the new tab → press <strong>F12</strong> → Console → paste the script shown (one click copy)</span>
+                <span>Switch to the new tab → click the <strong>🔴 QA Buddy</strong> Chrome extension icon → click <strong>Activate Recorder</strong></span>
               </div>
               <div className="flex gap-3">
                 <span className="w-6 h-6 rounded-full bg-violet-100 text-violet-700 text-xs font-bold flex items-center justify-center shrink-0">3</span>
-                <span>A red <strong>🔴 QA Buddy</strong> toolbar appears on the page — perform your test actions</span>
+                <span>A red <strong>🔴 QA Buddy</strong> toolbar appears on the page — works even on strict CSP sites</span>
               </div>
               <div className="flex gap-3">
                 <span className="w-6 h-6 rounded-full bg-violet-100 text-violet-700 text-xs font-bold flex items-center justify-center shrink-0">4</span>
@@ -388,47 +395,53 @@ export function TestCaseRecorderPage() {
             <div className="bg-white rounded-xl border-2 border-violet-200 overflow-hidden">
               <div className="bg-violet-600 px-5 py-3 flex items-center gap-2">
                 <Video size={16} className="text-white" />
-                <span className="text-white font-semibold text-sm">Start the Recorder on the New Tab</span>
+                <span className="text-white font-semibold text-sm">Activate the Recorder on the New Tab</span>
               </div>
               <div className="p-5 space-y-4">
-                <div className="flex items-start gap-4">
-                  {/* Steps */}
-                  <ol className="flex-1 space-y-3 text-sm text-slate-700">
-                    <li className="flex gap-3 items-start">
-                      <span className="w-6 h-6 rounded-full bg-violet-600 text-white text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">1</span>
-                      <span>Switch to the new tab that just opened</span>
-                    </li>
-                    <li className="flex gap-3 items-start">
-                      <span className="w-6 h-6 rounded-full bg-violet-600 text-white text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">2</span>
-                      <span>
-                        Press <kbd className="bg-slate-100 border border-slate-300 rounded px-1.5 py-0.5 text-xs font-mono">F12</kbd> to open DevTools, then click the <strong>Console</strong> tab
-                      </span>
-                    </li>
-                    <li className="flex gap-3 items-start">
-                      <span className="w-6 h-6 rounded-full bg-violet-600 text-white text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">3</span>
-                      <span>
-                        Click <strong>Copy Script</strong>, paste into the Console, press <kbd className="bg-slate-100 border border-slate-300 rounded px-1.5 py-0.5 text-xs font-mono">Enter</kbd>
-                      </span>
-                    </li>
-                    <li className="flex gap-3 items-start">
-                      <span className="w-6 h-6 rounded-full bg-violet-100 text-violet-600 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">4</span>
-                      <span>A <strong>🔴 QA Buddy</strong> toolbar will appear — perform your test actions and steps stream here live</span>
-                    </li>
+
+                {/* Primary: Chrome Extension */}
+                <div className="rounded-lg border border-violet-200 bg-violet-50 p-4 space-y-3">
+                  <div className="flex items-center gap-2 font-semibold text-violet-800 text-sm">
+                    <span className="text-base">🧩</span>
+                    Using the QA Buddy Chrome Extension <span className="text-xs font-normal text-violet-500 ml-1">(recommended — works on all sites)</span>
+                  </div>
+                  <ol className="text-sm text-violet-800 space-y-1.5 list-none pl-0">
+                    <li className="flex gap-2"><span className="text-violet-500 font-bold">1.</span> Switch to the new tab</li>
+                    <li className="flex gap-2"><span className="text-violet-500 font-bold">2.</span> Click the <strong>🔴 QA Buddy</strong> icon in your Chrome toolbar</li>
+                    <li className="flex gap-2"><span className="text-violet-500 font-bold">3.</span> Click <strong>▶ Activate Recorder</strong> in the popup</li>
                   </ol>
+                  <p className="text-xs text-violet-500">
+                    Don't have the extension? Load the <code className="bg-violet-100 px-1 rounded">chrome-extension/</code> folder from the repo in <strong>chrome://extensions</strong> → Developer Mode → Load unpacked.
+                  </p>
                 </div>
-                <button
-                  onClick={() => {
-                    const src = `${APP_ORIGIN}/recorder.js?s=${sessionId}&u=${encodeURIComponent(SUPABASE_URL)}&k=${encodeURIComponent(ANON_KEY)}&t=${Date.now()}`;
-                    const script = `var s=document.createElement('script');s.src='${src}';document.head.appendChild(s);`;
-                    navigator.clipboard.writeText(script);
-                    toast.success('Script copied! Switch to the new tab → F12 → Console → paste → Enter');
-                  }}
-                  className="flex items-center gap-2 bg-violet-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-violet-700 w-full justify-center"
-                >
-                  <Copy size={14} /> Copy Script to Clipboard
-                </button>
+
+                {/* Fallback: Console script */}
+                <details className="rounded-lg border border-slate-200 bg-slate-50 overflow-hidden">
+                  <summary className="px-4 py-2.5 text-sm text-slate-500 cursor-pointer hover:text-slate-700 select-none">
+                    No extension? Use the browser console instead ↓
+                  </summary>
+                  <div className="px-4 pb-4 pt-2 space-y-2">
+                    <ol className="text-sm text-slate-600 space-y-1 list-none pl-0">
+                      <li className="flex gap-2"><span className="text-slate-400 font-bold">1.</span> Switch to the new tab → press <kbd className="bg-white border border-slate-300 rounded px-1.5 py-0.5 text-xs font-mono">F12</kbd> → Console tab</li>
+                      <li className="flex gap-2"><span className="text-slate-400 font-bold">2.</span> Type <code className="bg-white border border-slate-200 rounded px-1 text-xs font-mono">allow pasting</code> and press Enter (Chrome security step)</li>
+                      <li className="flex gap-2"><span className="text-slate-400 font-bold">3.</span> Click Copy Script → paste → Enter</li>
+                    </ol>
+                    <button
+                      onClick={() => {
+                        const src = `${APP_ORIGIN}/recorder.js?s=${sessionId}&u=${encodeURIComponent(SUPABASE_URL)}&k=${encodeURIComponent(ANON_KEY)}&t=${Date.now()}`;
+                        const script = `var s=document.createElement('script');s.src='${src}';document.head.appendChild(s);`;
+                        navigator.clipboard.writeText(script);
+                        toast.success('Script copied — paste in Console (F12). Note: blocked by strict CSP sites.');
+                      }}
+                      className="flex items-center gap-1.5 bg-slate-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-slate-700"
+                    >
+                      <Copy size={13} /> Copy Console Script
+                    </button>
+                  </div>
+                </details>
+
                 <p className="text-xs text-slate-400 text-center">
-                  Steps will appear below automatically once the recorder is active
+                  Steps appear below in real-time once the recorder is active
                 </p>
               </div>
             </div>

@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "QA Buddy Recorder",
+  "version": "1.0.0",
+  "description": "Record browser actions as QA test steps — works on any site, bypasses CSP",
+  "permissions": ["activeTab", "scripting", "tabs", "storage"],
+  "host_permissions": ["<all_urls>"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "48": "icon48.png",
+      "128": "icon128.png"
+    }
+  },
+  "icons": {
+    "48": "icon48.png",
+    "128": "icon128.png"
+  }
+}
