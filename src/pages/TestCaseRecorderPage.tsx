@@ -103,6 +103,20 @@ export function TestCaseRecorderPage() {
   const ANON_KEY     = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
   const APP_ORIGIN   = window.location.origin;
 
+  // ── Respond to extension "request session" probe ───────────────────────────
+  // content-bridge.js dispatches __qa_buddy_request_session__ when it loads
+  // (handles the case where the tab was open before the extension was installed).
+  useEffect(() => {
+    const handleRequest = () => {
+      const s = (window as Window & { __QA_BUDDY_SESSION__?: object }).__QA_BUDDY_SESSION__;
+      if (s) {
+        window.dispatchEvent(new CustomEvent('__qa_buddy_session__', { detail: s }));
+      }
+    };
+    window.addEventListener('__qa_buddy_request_session__', handleRequest);
+    return () => window.removeEventListener('__qa_buddy_request_session__', handleRequest);
+  }, []);
+
   // ── Start recording ────────────────────────────────────────────────────────
   const startRecording = async () => {
     if (!url.trim() || !projectId || !user) return;

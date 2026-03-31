@@ -26,7 +26,32 @@ function setHint(text)  { hint.textContent = text; }
 
     // 2. Read session from chrome.storage.session (saved by background.js via content-bridge.js)
     const stored = await chrome.storage.session.get('qaSession');
-    const session = stored?.qaSession ?? null;
+    let session = stored?.qaSession ?? null;
+
+    // 2b. Fallback: if storage is empty, scan all open tabs for window.__QA_BUDDY_SESSION__
+    //     (handles the case where the QA Buddy tab was open before the extension was installed
+    //     or reloaded, so content-bridge.js was never injected into it)
+    if (!session?.sessionId) {
+      try {
+        const allTabs = await chrome.tabs.query({ url: ['http://*/*', 'https://*/*'] });
+        for (const tab of allTabs) {
+          if (!tab.id) continue;
+          try {
+            const res = await chrome.scripting.executeScript({
+              target: { tabId: tab.id },
+              world:  'MAIN',
+              func:   () => window.__QA_BUDDY_SESSION__ ?? null,
+            });
+            const found = res?.[0]?.result;
+            if (found?.sessionId) {
+              session = found;
+              await chrome.storage.session.set({ qaSession: session });
+              break;
+            }
+          } catch (_) { /* tab not injectable — skip */ }
+        }
+      } catch (_) { /* tabs query failed */ }
+    }
 
     if (!session?.sessionId) {
       headerSub.textContent = 'No active session';
